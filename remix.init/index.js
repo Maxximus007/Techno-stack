@@ -27,7 +27,10 @@ async function main({ rootDirectory }) {
 
   const DIR_NAME = path.basename(rootDirectory);
   const SUFFIX = getRandomString(2);
-  const APP_NAME = DIR_NAME + "-" + SUFFIX;
+
+  const APP_NAME = (DIR_NAME + "-" + SUFFIX)
+    // get rid of anything that's not allowed in an app name
+    .replace(/[^a-zA-Z0-9-_]/g, "-");
 
   const [prodContent, readme, env, packageJson] = await Promise.all([
     fs.readFile(FLY_TOML_PATH, "utf-8"),
@@ -65,13 +68,23 @@ async function main({ rootDirectory }) {
 
   execSync(`npm run setup`, { stdio: "inherit", cwd: rootDirectory });
 
-  await askSetupQuestions({ rootDirectory }).catch((error) => {
-    if (error.isTtyError) {
-      // Prompt couldn't be rendered in the current environment
-    } else {
-      throw error;
-    }
-  });
+  // TODO: There is currently an issue with the test cleanup script that results
+  // in an error when running Cypress in some cases. Add this question back
+  // when this is fixed.
+  // await askSetupQuestions({ rootDirectory }).catch((error) => {
+  //   if (error.isTtyError) {
+  //     // Prompt couldn't be rendered in the current environment
+  //   } else {
+  //     throw error;
+  //   }
+  // });
+
+  console.log(
+    `Setup is complete. You're now ready to rock and roll 🤘
+
+Start development with \`npm run dev\`
+    `.trim()
+  );
 }
 
 async function askSetupQuestions({ rootDirectory }) {
@@ -91,7 +104,6 @@ async function askSetupQuestions({ rootDirectory }) {
     );
     execSync(`npm run validate`, { stdio: "inherit", cwd: rootDirectory });
   }
-  console.log(`✅  Project is ready! Start development with "npm run dev"`);
 }
 
 module.exports = main;
